@@ -4,7 +4,6 @@ import pandas as pd
 import geopandas as gpd
 from PIL import Image   #To use images in the app
 import altair as alt    #To add altair visualisations of the data
-import pandas as pd   #For simple data manipulation
 
 # Load the favicon and set the page config (so what appears in the tab on your web browser)
 im = Image.open("/Users/lionlukasnaumann/Nextcloud/Marketing/Design/Druck/logo/favicon.png")
@@ -19,12 +18,30 @@ st.markdown(
     )
 
 data = pd.read_csv('/Users/lionlukasnaumann/Downloads/K-2020-AI016-1--AI1601--2023-11-15.csv',delimiter=';')
-gdf = gpd.read_file('/Users/lionlukasnaumann/Downloads/dland_destatis.geojson')
+data.head()
 
-geojson_data = gdf.to_json()
-geojson_la = '/Users/lionlukasnaumann/Downloads/dland_destatis.geojson'
+# Pfad zu Ihrer GeoJSON-Datei
+geojson_path = 'destatis_geo.shp'
+
+# Laden des GeoJSON mithilfe von Geopandas
+gdf = gpd.read_file(geojson_path)
+gdf.head()
+
+gdf.to_crs(epsg=4326, inplace=True)
+
+gdf['centroid'] = gdf.geometry.centroid
+
+# Extrahieren der X- und Y-Koordinaten des Centroids
+gdf['x'] = gdf.centroid.x
+gdf['y'] = gdf.centroid.y
+
+# Optional: Entfernen der Spalte 'centroid', wenn sie nicht benötigt wird
+gdf.drop(columns=['centroid'], inplace=True)
+
+url = r'dland_destatis.geojson'
+
 geodata_la = alt.Data(
-  url=geojson_la, format=alt.DataFormat(property="features", type="json")
+  url=url, format=alt.DataFormat(property="features", type="json")
 )
 # Create an Altair chart for the GeoJSON data
 chart = alt.Chart(geodata_la).mark_geoshape(
